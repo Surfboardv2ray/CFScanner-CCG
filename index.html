@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>کانفیگ اسکنر مرتضی</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font/dist/font-face.css">
+    <style>
+        body {
+            font-family: 'Vazir', sans-serif;
+            background-color: #fff;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: linear-gradient(145deg, #e3e3e3, #ffffff);
+            box-shadow: 5px 5px 10px #ccc, -5px -5px 10px #fff;
+            border-radius: 15px;
+            padding: 20px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+        .input-box, .result-box, .dropdown, .submit-btn {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            font-size: 18px;
+            width: 100%;
+            box-shadow: inset 3px 3px 5px #b3b3b3, inset -3px -3px 5px #fff;
+        }
+        .input-box {
+            resize: none;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        .input-box, .result-box {
+            margin: 20px -10px;
+        }
+        .submit-btn {
+            background-color: #ff8500;
+            color: white;
+            font-family: 'Vazir', sans-serif;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .submit-btn:hover {
+            background-color: #ff9800;
+        }
+        .result-box {
+            min-height: 100px;
+            background-color: #f7f7f7;
+            overflow: auto;
+            text-align: left;
+            position: relative;
+            direction: ltr;
+        }
+        .result-box pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+            font-family: Consolas, "Courier New", monospace;
+            direction: ltr;
+        }
+        .copy-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 20px;
+        }
+        .footer {
+            margin-top: 20px;
+            color: grey;
+            text-align: center;
+        }
+        .footer a {
+            margin: 0 10px;
+            color: #ff8500;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>کانفیگ خود را وارد کنید:</h2>
+        <textarea class="input-box" id="configInput" placeholder="کانفیگ خود را اینجا وارد کنید..."></textarea>
+
+        <h3>نوع کانفیگ را انتخاب کنید:</h3>
+        <select class="dropdown" id="configType">
+            <option value="vmess">vmess+ws+tls</option>
+            <option value="vless">vless+ws+tls</option>
+            <option value="trojan">trojan+ws+tls</option>
+        </select>
+
+        <button class="submit-btn" onclick="convertConfig()">تبدیل کانفیگ</button>
+
+        <h4>کانفیگ اسکنر مرتضی:</h4>
+        <div class="result-box" id="resultBox">
+            <pre id="resultText"></pre>
+            <span class="copy-icon" onclick="copyToClipboard()">📋</span>
+        </div>
+
+        <div class="footer">
+            <a href="https://t.me/Surfboardv2ray">کانال تلگرام</a> | 
+            <a href="https://github.com/Surfboardv2ray">گیت‌هاب</a>
+            <p>Surfboardv2ray, 2024</p>
+        </div>
+    </div>
+
+    <script>
+        function convertConfig() {
+            const configInput = document.getElementById("configInput").value.trim();
+            const configType = document.getElementById("configType").value;
+            const resultBox = document.getElementById("resultText");
+            resultBox.innerHTML = "";  // Clear previous result
+
+            try {
+                let outputJson = "";
+
+                if (configType === "vmess") {
+                    if (!configInput.startsWith("vmess://")) throw "لطفا یک کانفیگ vmess وارد کنید";
+                    const base64Content = configInput.slice(8);
+                    let decodedConfig;
+                    
+                    try {
+                        decodedConfig = JSON.parse(atob(base64Content));
+                    } catch (e) {
+                        throw "لطفا یک کانفیگ vmess با فرمت صحیح وارد کنید";
+                    }
+
+                    const { path, host, sni, id, port } = decodedConfig;
+                    if (!path || !host || !sni || !id || !port) throw "کانفیگ vmess با ساختار پشتیبانی شده مطابقت ندارد";
+
+                    outputJson = `{
+  "inbounds": [{
+    "port": "PORTPORT", 
+    "listen": "127.0.0.1",
+    "tag": "socks-inbound",
+    "protocol": "socks",
+    "settings": {
+      "auth": "noauth",
+      "udp": false,
+      "ip": "127.0.0.1"
+    },
+    "sniffing": {
+      "enabled": true,
+      "destOverride": ["http", "tls"]
+    }
+  }],
+  "outbounds": [
+    {
+    "protocol": "vmess",
+    "settings": {
+      "vnext": [{
+        "address": "IP.IP.IP.IP", 
+        "port": ${port},
+        "users": [{"id": "${id}" }]
+      }]
+    },
+		"streamSettings": {
+        "network": "ws",
+        "security": "tls",
+        "wsSettings": {
+            "headers": {
+                "Host": "${host}"
+            },
+            "path": "${path}"
+        },
+        "tlsSettings": {
+            "serverName": "${sni}",
+            "allowInsecure": false,
+			"fingerprint": "chrome",
+			"alpn": [
+			"http/1.1"
+			]
+        }
+    }
+	}],
+  "other": {}
+}`;
+
+                } else if (configType === "vless") {
+                    if (!configInput.startsWith("vless://")) throw "لطفا یک کانفیگ vless وارد کنید";
+                    if (!configInput.includes("security=tls") || !configInput.includes("sni")) throw "کانفیگ vless با فرمت پشتیبانی شده مطابقت ندارد";
+
+                    const url = new URL(configInput);
+                    const id = url.username;
+                    const port = url.port;
+                    const sni = url.searchParams.get("sni");
+                    const host = url.searchParams.get("host");
+                    const path = url.searchParams.get("path");
+                    if (!id || !port || !sni || !host || !path) throw "کانفیگ vless با ساختار پشتیبانی شده مطابقت ندارد";
+
+                    outputJson = `{
+"inbounds": [{
+    "port": "PORTPORT", 
+    "listen": "127.0.0.1",
+    "tag": "socks-inbound",
+    "protocol": "socks",
+    "settings": {
+      "auth": "noauth",
+      "udp": false,
+      "ip": "127.0.0.1"
+    },
+    "sniffing": {
+      "enabled": true,
+      "destOverride": ["http", "tls"]
+    }
+  }],
+  "outbounds": [
+    {
+      "tag": "proxy",
+      "protocol": "vless",
+      "settings": {
+        "vnext": [{
+        "address": "IP.IP.IP.IP", 
+        "port": ${port},
+        "users": [{"id": "${id}",
+		"encryption": "none"
+			}]
+      }]
+      },
+      "streamSettings": {
+        "network": "ws",
+        "security": "tls",
+        "tlsSettings": {
+          "allowInsecure": false,
+          "serverName": "${sni}",
+          "alpn": [
+            "http/1.1"
+          ],
+          "fingerprint": "chrome"
+        },
+        "wsSettings": {
+          "path": "${path}",
+          "headers": {
+            "Host": "${host}"
+          }
+        }
+      }
+    }
+  ],
+	"other": {}
+}`;
+
+                } else if (configType === "trojan") {
+                    if (!configInput.startsWith("trojan://")) throw "لطفا یک کانفیگ trojan وارد کنید";
+                    if (!configInput.includes("security=tls") || !configInput.includes("sni")) throw "کانفیگ trojan با فرمت پشتیبانی شده مطابقت ندارد";
+
+                    const url = new URL(configInput);
+                    const id = url.username;
+                    const port = url.port;
+                    const sni = url.searchParams.get("sni");
+                    const host = url.searchParams.get("host");
+                    const path = url.searchParams.get("path");
+                    if (!id || !port || !sni || !host || !path) throw "کانفیگ trojan با ساختار پشتیبانی شده مطابقت ندارد";
+
+                    outputJson = `{
+  "inbounds": [{
+    "port": "PORTPORT", 
+    "listen": "127.0.0.1",
+    "tag": "socks-inbound",
+    "protocol": "socks",
+    "settings": {
+      "auth": "noauth",
+      "udp": false,
+      "ip": "127.0.0.1"
+    },
+    "sniffing": {
+      "enabled": true,
+      "destOverride": ["http", "tls"]
+    }
+  }],
+  "outbounds": [
+    {
+      "tag": "proxy",
+      "protocol": "trojan",
+      "settings": {
+        "servers": [
+          {
+            "address": "IP.IP.IP.IP",
+            "method": "chacha20",
+            "ota": false,
+            "password": "${id}",
+            "port": ${port},
+            "level": 1,
+            "flow": ""
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "ws",
+        "security": "tls",
+        "tlsSettings": {
+          "allowInsecure": false,
+          "serverName": "${sni}",
+          "alpn": [
+            "http/1.1"
+          ],
+          "fingerprint": "chrome"
+        },
+        "wsSettings": {
+          "path": "${path}",
+          "headers": {
+            "Host": "${host}"
+          }
+        }
+      },
+      "mux": {
+        "enabled": false,
+        "concurrency": -1
+      }
+    }
+  ],
+  "other": {}
+}`;
+
+                } else {
+                    throw "نوع کانفیگ ناشناخته است";
+                }
+
+                resultBox.innerHTML = outputJson;
+
+            } catch (error) {
+                resultBox.innerHTML = `<span style="color: red;">${error}</span>`;
+            }
+        }
+
+        function copyToClipboard() {
+            const resultText = document.getElementById("resultText").innerText;
+            navigator.clipboard.writeText(resultText).then(() => {
+                alert("متن کپی شد!");
+            }).catch(err => {
+                alert("خطا در کپی متن");
+            });
+        }
+    </script>
+</body>
+</html>
