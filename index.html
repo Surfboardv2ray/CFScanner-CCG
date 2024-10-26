@@ -121,6 +121,13 @@
     </div>
 
     <script>
+        function isBase64(str) {
+            try {
+                return btoa(atob(str)) === str;
+            } catch (err) {
+                return false;
+            }
+        }
         function convertConfig() {
             const configInput = document.getElementById("configInput").value.trim();
             const configType = document.getElementById("configType").value;
@@ -196,13 +203,17 @@
                     if (!configInput.startsWith("vless://")) throw "لطفا یک کانفیگ vless وارد کنید";
                     if (!configInput.includes("security=tls") || !configInput.includes("sni")) throw "کانفیگ vless با فرمت پشتیبانی شده مطابقت ندارد";
 
-                    const url = new URL(configInput);
-                    const id = url.username;
-                    const port = url.port;
-                    const sni = url.searchParams.get("sni");
-                    const host = url.searchParams.get("host");
-                    const path = url.searchParams.get("path");
-                    if (!id || !port || !sni || !host || !path) throw "کانفیگ vless با ساختار پشتیبانی شده مطابقت ندارد";
+		    const urlParts = configInput.slice(8).split('@');
+		    const id = urlParts[0]; // Extract the id before the '@'
+		    
+		    const hostPortPath = urlParts[1].split('?')[0]; // Get everything before '?'
+		    const [host, port] = hostPortPath.split(':'); // Split by ':' to get host and port
+		    
+		    // Extract 'path' and ignore remarks after '#'
+		    const path = new URLSearchParams(urlParts[1].split('?')[1]).get("path")?.split('#')[0] || '';
+		    
+		    const sni = new URLSearchParams(urlParts[1].split('?')[1]).get("sni");
+		    if (!id || !port || !sni || !host || !path) throw "کانفیگ vless با ساختار پشتیبانی شده مطابقت ندارد";
 
                     outputJson = `{
 "inbounds": [{
@@ -260,13 +271,19 @@
                     if (!configInput.startsWith("trojan://")) throw "لطفا یک کانفیگ trojan وارد کنید";
                     if (!configInput.includes("security=tls") || !configInput.includes("sni")) throw "کانفیگ trojan با فرمت پشتیبانی شده مطابقت ندارد";
 
-                    const url = new URL(configInput);
-                    const id = url.username;
-                    const port = url.port;
-                    const sni = url.searchParams.get("sni");
-                    const host = url.searchParams.get("host");
-                    const path = url.searchParams.get("path");
-                    if (!id || !port || !sni || !host || !path) throw "کانفیگ trojan با ساختار پشتیبانی شده مطابقت ندارد";
+		    const urlParts = configInput.slice(9).split('@');
+		    const id = urlParts[0]; // Extract the id before the '@'
+		    
+		    const hostPortPath = urlParts[1].split('?')[0]; // Get everything before '?'
+		    const [host, port] = hostPortPath.split(':'); // Split by ':' to get host and port
+		    
+		    // Extract 'path' and ignore remarks after '#'
+		    const path = new URLSearchParams(urlParts[1].split('?')[1]).get("path")?.split('#')[0] || '';
+		    
+		    const sni = new URLSearchParams(urlParts[1].split('?')[1]).get("sni");
+		    if (!id || !port || !sni || !host || !path) throw "کانفیگ trojan با ساختار پشتیبانی شده مطابقت ندارد";
+		
+		    if (!id || !port || !sni || !host || !path) throw "کانفیگ trojan با ساختار پشتیبانی شده مطابقت ندارد";
 
                     outputJson = `{
   "inbounds": [{
