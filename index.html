@@ -217,7 +217,9 @@
     const id = urlParts[0]; // Extract the id before the '@'
 
     const hostPortPath = urlParts[1].split('?')[0]; // Get everything before '?'
-    const [host, port] = hostPortPath.split(':'); // Split by ':' to get host and port
+    const lastColonIndex = hostPortPath.lastIndexOf(':');
+    const host = hostPortPath.slice(0, lastColonIndex);
+    const port = hostPortPath.slice(lastColonIndex + 1);
 
     const queryParams = new URLSearchParams(urlParts[1].split('?')[1]);
 
@@ -298,7 +300,10 @@
     const id = urlParts[0]; // Extract the id before the '@'
 
     const hostPortPath = urlParts[1].split('?')[0]; // Get everything before '?'
-    const [host, port] = hostPortPath.split(':'); // Split by ':' to get host and port
+    const lastColonIndex = hostPortPath.lastIndexOf(':');
+    const host = hostPortPath.slice(0, lastColonIndex);
+    const port = hostPortPath.slice(lastColonIndex + 1);
+
 
     const queryParams = new URLSearchParams(urlParts[1].split('?')[1]);
 
