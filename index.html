@@ -267,7 +267,7 @@
             "network": "ws",
             "security": "tls",
             "tlsSettings": {
-              "allowInsecure": ${allowInsecure},  // Set allowInsecure based on the config
+              "allowInsecure": ${allowInsecure},
               "serverName": "${sniValue}",
               "alpn": ["http/1.1"],
               "fingerprint": "chrome"
@@ -344,7 +344,7 @@
                             "method": "chacha20",
                             "ota": false,
                             "password": id,
-                            "port": parseInt(port, 10),  // Ensure port is parsed as an integer
+                            "port": parseInt(port, 10),
                             "level": 1,
                             "flow": ""
                         }
@@ -354,7 +354,7 @@
                     "network": "ws",
                     "security": "tls",
                     "tlsSettings": {
-                        "allowInsecure": allowInsecure,  // Set allowInsecure based on the config
+                        "allowInsecure": allowInsecure,
                         "serverName": sniValue,
                         "alpn": ["http/1.1"],
                         "fingerprint": "chrome"
