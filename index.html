@@ -204,7 +204,7 @@
     const configInput = document.getElementById("configInput").value.trim();
 
     // Step 1: Check that it starts with 'vless://' (case-insensitive)
-    if (!configInput.toLowerCase().startsWith("vless://")) throw "لطفا یک کانفیگ vless وارد کنید";
+    if (!configInput.startsWith("vless://")) throw "لطفا یک کانفیگ vless وارد کنید";
 
     // Step 2: Check for security type, case-insensitively
     if (!configInput.toLowerCase().includes("security=tls")) throw "کانفیگ وارد شده باید از نوع tls باشد";
