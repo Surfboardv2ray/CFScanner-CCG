@@ -284,84 +284,98 @@
       "other": {}
     }`;
 	} else if (configType === "trojan") {
-                    if (!configInput.startsWith("trojan://")) throw "لطفا یک کانفیگ trojan وارد کنید";
-                    if (!configInput.includes("security=tls") || !configInput.includes("sni")) throw "کانفیگ trojan با فرمت پشتیبانی شده مطابقت ندارد";
+    // Get the config input without converting to lowercase
+    const configInput = document.getElementById("configInput").value.trim();
 
-		    const urlParts = configInput.slice(9).split('@');
-		    const id = urlParts[0]; // Extract the id before the '@'
-		    
-		    const hostPortPath = urlParts[1].split('?')[0]; // Get everything before '?'
-		    const [host, port] = hostPortPath.split(':'); // Split by ':' to get host and port
-		    
-		    // Extract 'path' and ignore remarks after '#'
-		    const path = new URLSearchParams(urlParts[1].split('?')[1]).get("path")?.split('#')[0] || '';
-		    
-		    const sni = new URLSearchParams(urlParts[1].split('?')[1]).get("sni");
-		    if (!id || !port || !sni || !host || !path) throw "کانفیگ trojan با ساختار پشتیبانی شده مطابقت ندارد";
-		
-		    if (!id || !port || !sni || !host || !path) throw "کانفیگ trojan با ساختار پشتیبانی شده مطابقت ندارد";
+    // Step 1: Check for 'security=tls' (case-insensitively)
+    if (!configInput.toLowerCase().includes("security=tls")) throw "کانفیگ وارد شده باید از نوع tls باشد";
 
-                    outputJson = `{
-  "inbounds": [{
-    "port": "PORTPORT", 
-    "listen": "127.0.0.1",
-    "tag": "socks-inbound",
-    "protocol": "socks",
-    "settings": {
-      "auth": "noauth",
-      "udp": false,
-      "ip": "127.0.0.1"
-    },
-    "sniffing": {
-      "enabled": true,
-      "destOverride": ["http", "tls"]
-    }
-  }],
-  "outbounds": [
-    {
-      "tag": "proxy",
-      "protocol": "trojan",
-      "settings": {
-        "servers": [
-          {
-            "address": "IP.IP.IP.IP",
-            "method": "chacha20",
-            "ota": false,
-            "password": "${id}",
-            "port": ${port},
-            "level": 1,
-            "flow": ""
-          }
-        ]
-      },
-      "streamSettings": {
-        "network": "ws",
-        "security": "tls",
-        "tlsSettings": {
-          "allowInsecure": false,
-          "serverName": "${sni}",
-          "alpn": [
-            "http/1.1"
-          ],
-          "fingerprint": "chrome"
-        },
-        "wsSettings": {
-          "path": "${path}",
-          "headers": {
-            "Host": "${host}"
-          }
-        }
-      },
-      "mux": {
-        "enabled": false,
-        "concurrency": -1
-      }
-    }
-  ],
-  "other": {}
-}`;
+    // Step 2: Check for 'sni=' (case-insensitively)
+    if (!configInput.toLowerCase().includes("sni=")) throw "کانفیگ باید sni داشته باشد";
 
-                } else {
+    // Parsing the config URL
+    const urlParts = configInput.slice(9).split('@');
+    const id = urlParts[0]; // Extract the id before the '@'
+
+    const hostPortPath = urlParts[1].split('?')[0]; // Get everything before '?'
+    const [host, port] = hostPortPath.split(':'); // Split by ':' to get host and port
+
+    const queryParams = new URLSearchParams(urlParts[1].split('?')[1]);
+
+    // Step 4: Extract the "host" value until '&'
+    const hostValue = queryParams.get("host")?.split('&')[0] || '';
+    if (!hostValue) throw "کانفیگ trojan با ساختار پشتیبانی شده مطابقت ندارد";
+
+    // Step 5: Extract the "sni" value until '&'
+    const sniValue = queryParams.get("sni")?.split('&')[0] || '';
+    if (!sniValue) throw "کانفیگ trojan با ساختار پشتیبانی شده مطابقت ندارد";
+
+    // Ensure id and port are valid
+    if (!id || !port) throw "کانفیگ trojan با ساختار پشتیبانی شده مطابقت ندارد";
+
+    // Step 6: Check the 'allowInsecure' parameter
+    const allowInsecureParam = queryParams.get("allowInsecure");
+    const allowInsecure = allowInsecureParam === '1'; 
+
+    outputJson = {
+        "inbounds": [{
+            "port": "PORTPORT", 
+            "listen": "127.0.0.1",
+            "tag": "socks-inbound",
+            "protocol": "socks",
+            "settings": {
+                "auth": "noauth",
+                "udp": false,
+                "ip": "127.0.0.1"
+            },
+            "sniffing": {
+                "enabled": true,
+                "destOverride": ["http", "tls"]
+            }
+        }],
+        "outbounds": [
+            {
+                "tag": "proxy",
+                "protocol": "trojan",
+                "settings": {
+                    "servers": [
+                        {
+                            "address": "IP.IP.IP.IP",
+                            "method": "chacha20",
+                            "ota": false,
+                            "password": id,
+                            "port": parseInt(port, 10),  // Ensure port is parsed as an integer
+                            "level": 1,
+                            "flow": ""
+                        }
+                    ]
+                },
+                "streamSettings": {
+                    "network": "ws",
+                    "security": "tls",
+                    "tlsSettings": {
+                        "allowInsecure": allowInsecure,  // Set allowInsecure based on the config
+                        "serverName": sniValue,
+                        "alpn": ["http/1.1"],
+                        "fingerprint": "chrome"
+                    },
+                    "wsSettings": {
+                        "path": queryParams.get("path")?.split('#')[0] || '',
+                        "headers": {
+                            "Host": hostValue
+                        }
+                    }
+                },
+                "mux": {
+                    "enabled": false,
+                    "concurrency": -1
+                }
+            }
+        ],
+        "other": {}
+    };
+}
+ else {
                     throw "نوع کانفیگ ناشناخته است";
                 }
 
