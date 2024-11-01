@@ -286,11 +286,11 @@
       "other": {}
     }`;
 	} else if (configType === "trojan") {
-    // Get the config input without converting to lowercase
+    // Get the config input
     const configInput = document.getElementById("configInput").value.trim();
 
     // Step 1: Check for 'security=tls' (case-insensitively)
-    if (!configInput.toLowerCase().includes("security=tls")) throw "کانفیگ وارد شده باید از نوع tls باشد";
+    if (!configInput.toLowerCase().includes("security=tls")) throw "لطفا یک کانفیگ trojan با ساختار معتبر وارد کنید";
 
     // Step 2: Check for 'sni=' (case-insensitively)
     if (!configInput.toLowerCase().includes("sni=")) throw "کانفیگ باید sni داشته باشد";
