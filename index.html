@@ -352,8 +352,8 @@
                             "address": "IP.IP.IP.IP",
                             "method": "chacha20",
                             "ota": false,
-                            "password": id,
-                            "port": parseInt(port, 10),
+                            "password": ${id},
+                            "port": ${port},
                             "level": 1,
                             "flow": ""
                         }
@@ -363,15 +363,15 @@
                     "network": "ws",
                     "security": "tls",
                     "tlsSettings": {
-                        "allowInsecure": allowInsecure,
-                        "serverName": sniValue,
+                        "allowInsecure": ${allowInsecure},
+                        "serverName": ${sniValue},
                         "alpn": ["http/1.1"],
                         "fingerprint": "chrome"
                     },
                     "wsSettings": {
                         "path": "${queryParams.get("path")?.split('#')[0] || ''}"',
                         "headers": {
-                            "Host": hostValue
+                            "Host": ${hostValue}
                         }
                     }
                 },
