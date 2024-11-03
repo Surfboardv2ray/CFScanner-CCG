@@ -111,6 +111,7 @@
         <div class="result-box" id="resultBox">
             <pre id="resultText"></pre>
             <span class="copy-icon" onclick="copyToClipboard()">📋</span>
+            <span class="icon save-icon" onclick="saveToFile()">💾</span>
         </div>
 
         <div class="footer">
@@ -398,6 +399,24 @@
             }).catch(err => {
                 alert("خطا در کپی متن");
             });
+        }
+	    
+        function saveToFile() {
+            const resultText = document.getElementById("resultText").innerText;
+            if (!resultText) {
+                alert("هیچ محتوایی برای ذخیره وجود ندارد!");
+                return;
+            }
+
+            const blob = new Blob([resultText], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "config.json";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
     </script>
 </body>
