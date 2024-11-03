@@ -74,13 +74,14 @@
             font-family: Consolas, "Courier New", monospace;
             direction: ltr;
         }
-        .copy-icon {
+        .icon {
             position: absolute;
             top: 10px;
-            right: 10px;
             cursor: pointer;
             font-size: 20px;
         }
+        .save-icon {
+            right: 10px;
         .footer {
             margin-top: 20px;
             color: grey;
@@ -110,7 +111,6 @@
         <h4>کانفیگ اسکنر مرتضی:</h4>
         <div class="result-box" id="resultBox">
             <pre id="resultText"></pre>
-            <span class="copy-icon" onclick="copyToClipboard()">📋</span>
             <span class="icon save-icon" onclick="saveToFile()">💾</span>
         </div>
 
@@ -201,20 +201,20 @@
 }`;
 
                 } else if (configType === "vless") {
+
     // Get the config input without converting to lowercase
     const configInput = document.getElementById("configInput").value.trim();
+    if (!configInput.startsWith("vless://")) {
+          throw "لطفا یک کانفیگ vless وارد کنید";
+    }
+    // Step 1: Check for 'security=tls' (case-insensitively)
+    if (!configInput.toLowerCase().includes("security=tls")) throw "لطفا یک کانفیگ vless با ساختار معتبر وارد کنید";
 
-    // Step 1: Check that it starts with 'vless://' (case-insensitive)
-    if (!configInput.startsWith("vless://")) throw "لطفا یک کانفیگ vless وارد کنید";
-
-    // Step 2: Check for security type, case-insensitively
-    if (!configInput.toLowerCase().includes("security=tls")) throw "کانفیگ وارد شده باید از نوع tls باشد";
-
-    // Step 3: Check for SNI, case-insensitively
+    // Step 2: Check for 'sni=' (case-insensitively)
     if (!configInput.toLowerCase().includes("sni=")) throw "کانفیگ باید sni داشته باشد";
 
     // Parsing the config URL
-    const urlParts = configInput.slice(8).split('@');
+    const urlParts = configInput.slice(9).split('@');
     const id = urlParts[0]; // Extract the id before the '@'
 
     const hostPortPath = urlParts[1].split('?')[0]; // Get everything before '?'
@@ -222,18 +222,18 @@
     const host = hostPortPath.slice(0, lastColonIndex);
     const port = hostPortPath.slice(lastColonIndex + 1);
 
+
     const queryParams = new URLSearchParams(urlParts[1].split('?')[1]);
 
     // Step 4: Extract the "host" value until '&'
     const hostValue = queryParams.get("host")?.split('&')[0] || '';
-    if (!hostValue) throw "کانفیگ vless با ساختار پشتیبانی شده مطابقت ندارد";
+    if (!hostValue) throw "کانفیگ trojan با ساختار پشتیبانی شده مطابقت ندارد";
 
     // Step 5: Extract the "sni" value until '&'
     const sniValue = queryParams.get("sni")?.split('&')[0] || '';
-    if (!sniValue) throw "کانفیگ vless با ساختار پشتیبانی شده مطابقت ندارد";
 
     // Ensure id and port are valid
-    if (!id || !port) throw "کانفیگ vless با ساختار پشتیبانی شده مطابقت ندارد";
+    if (!id || !port) throw "کانفیگ trojan با ساختار پشتیبانی شده مطابقت ندارد";
 
     // Step 6: Check the 'allowInsecure' parameter
     const allowInsecureParam = queryParams.get("allowInsecure");
@@ -286,10 +286,14 @@
       ],
       "other": {}
     }`;
-	} else if (configType === "trojan") {
-    // Get the config input
-    const configInput = document.getElementById("configInput").value.trim();
 
+                } else if (configType === "trojan") {
+
+    // Get the config input without converting to lowercase
+    const configInput = document.getElementById("configInput").value.trim();
+    if (!configInput.startsWith("trojan://")) {
+          throw "لطفا یک کانفیگ trojan وارد کنید";
+    }
     // Step 1: Check for 'security=tls' (case-insensitively)
     if (!configInput.toLowerCase().includes("security=tls")) throw "لطفا یک کانفیگ trojan با ساختار معتبر وارد کنید";
 
@@ -314,7 +318,6 @@
 
     // Step 5: Extract the "sni" value until '&'
     const sniValue = queryParams.get("sni")?.split('&')[0] || '';
-    if (!sniValue) throw "کانفیگ trojan با ساختار پشتیبانی شده مطابقت ندارد";
 
     // Ensure id and port are valid
     if (!id || !port) throw "کانفیگ trojan با ساختار پشتیبانی شده مطابقت ندارد";
@@ -322,8 +325,8 @@
     // Step 6: Check the 'allowInsecure' parameter
     const allowInsecureParam = queryParams.get("allowInsecure");
     const allowInsecure = allowInsecureParam === '1'; 
-
-    outputJson = {
+			
+    outputJson = `{
         "inbounds": [{
             "port": "PORTPORT", 
             "listen": "127.0.0.1",
@@ -379,7 +382,7 @@
             }
         ],
         "other": {}
-    };
+    }`;
 }
  else {
                     throw "نوع کانفیگ ناشناخته است";
@@ -390,15 +393,6 @@
             } catch (error) {
                 resultBox.innerHTML = `<span style="color: red;">${error}</span>`;
             }
-        }
-
-        function copyToClipboard() {
-            const resultText = document.getElementById("resultText").innerText;
-            navigator.clipboard.writeText(resultText).then(() => {
-                alert("متن کپی شد!");
-            }).catch(err => {
-                alert("خطا در کپی متن");
-            });
         }
 	    
         function saveToFile() {
